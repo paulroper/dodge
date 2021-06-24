@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=2]
+[gd_scene load_steps=9 format=2]
 
 [ext_resource path="res://Entities/Player/Player.tscn" type="PackedScene" id=1]
 [ext_resource path="res://Entities/Mob/Mob.tscn" type="PackedScene" id=2]
@@ -6,6 +6,7 @@
 [ext_resource path="res://Entities/Hud/Hud.tscn" type="PackedScene" id=4]
 [ext_resource path="res://Assets/Sounds/gameover.wav" type="AudioStream" id=5]
 [ext_resource path="res://Assets/Music/House In a Forest Loop.ogg" type="AudioStream" id=6]
+[ext_resource path="res://Assets/Art/bg.jpg" type="Texture" id=7]
 
 [sub_resource type="Curve2D" id=1]
 _data = {
@@ -15,6 +16,14 @@ _data = {
 [node name="Main" type="Node"]
 script = ExtResource( 3 )
 Mob = ExtResource( 2 )
+
+[node name="TextureRect" type="TextureRect" parent="."]
+margin_right = 480.0
+margin_bottom = 720.0
+texture = ExtResource( 7 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
 
 [node name="Player" parent="." instance=ExtResource( 1 )]
 position = Vector2( 240.508, 453.96 )
