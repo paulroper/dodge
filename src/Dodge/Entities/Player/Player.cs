@@ -4,12 +4,12 @@ namespace Dodge
 {
     public static class PlayerSignals
     {
-        public static string Hit = "Hit";
+        public const string Hit = "Hit";
     }
 
     public static class PlayerNodes
     {
-        public static string Hitbox = "Hitbox";
+        public const string Hitbox = "Hitbox";
     }
 
     public class Player : Area2D

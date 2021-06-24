@@ -5,13 +5,13 @@ namespace Dodge
 {
     public static class MainNodes
     {
-        public static string Hud = "HUD";
-        public static string MobSpawnLocation = "MobPath/MobSpawnLocation";
-        public static string MobTimer = "MobTimer";
-        public static string Player = "Player";
-        public static string ScoreTimer = "ScoreTimer";
-        public static string StartPosition = "StartPosition";
-        public static string StartTimer = "StartTimer";
+        public const string Hud = "HUD";
+        public const string MobSpawnLocation = "MobPath/MobSpawnLocation";
+        public const string MobTimer = "MobTimer";
+        public const string Player = "Player";
+        public const string ScoreTimer = "ScoreTimer";
+        public const string StartPosition = "StartPosition";
+        public const string StartTimer = "StartTimer";
     }
 
     public class Main : Node

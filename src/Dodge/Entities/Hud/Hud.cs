@@ -5,11 +5,11 @@ namespace Dodge
 {
     public static class HudNodes
     {
-        public static string HiScoreLabel = "HiScoreLabel";
-        public static string StartButton = "StartButton";
-        public static string Message = "Message";
-        public static string MessageTimer = "MessageTimer";
-        public static string ScoreLabel = "ScoreLabel";
+        public const string HiScoreLabel = "HiScoreLabel";
+        public const string StartButton = "StartButton";
+        public const string Message = "Message";
+        public const string MessageTimer = "MessageTimer";
+        public const string ScoreLabel = "ScoreLabel";
     }
 
     public class Hud : CanvasLayer

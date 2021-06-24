@@ -5,7 +5,7 @@ namespace Dodge
 {
     public static class MobNodes
     {
-        public static string Sprite = "AnimatedSprite";
+        public const string Sprite = "AnimatedSprite";
     }
 
     public class Mob : RigidBody2D
