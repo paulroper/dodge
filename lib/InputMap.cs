@@ -1,4 +1,4 @@
-namespace DodgeTutorial
+namespace Dodge
 {
     public static class InputMap
     {

@@ -1,80 +1,80 @@
 using Godot;
 using System;
 
-namespace DodgeTutorial
+namespace Dodge
 {
-	public static class HUDNodes
-	{
-		public static string HiScoreLabel = "HiScoreLabel";
-		public static string StartButton = "StartButton";
-		public static string Message = "Message";
-		public static string MessageTimer = "MessageTimer";
-		public static string ScoreLabel = "ScoreLabel";
-	}
+    public static class HUDNodes
+    {
+        public static string HiScoreLabel = "HiScoreLabel";
+        public static string StartButton = "StartButton";
+        public static string Message = "Message";
+        public static string MessageTimer = "MessageTimer";
+        public static string ScoreLabel = "ScoreLabel";
+    }
 
-	public class HUD : CanvasLayer
-	{
-		[Signal]
-		public delegate void StartGame();
+    public class HUD : CanvasLayer
+    {
+        [Signal]
+        public delegate void StartGame();
 
-		public void ShowMessage(string text)
-		{
-			var message = GetMessage();
-			message.Text = text;
-			message.Show();
+        public void ShowMessage(string text)
+        {
+            var message = GetMessage();
+            message.Text = text;
+            message.Show();
 
-			GetMessageTimer().Start();
-		}
+            GetMessageTimer().Start();
+        }
 
-		public async void ShowGameOver()
-		{
-			ShowMessage("Game over\n:(");
+        public async void ShowGameOver()
+        {
+            ShowMessage("Game over\n:(");
 
-			var messageTimer = GetMessageTimer();
-			await ToSignal(messageTimer, "timeout");
+            var messageTimer = GetMessageTimer();
+            await ToSignal(messageTimer, "timeout");
 
-			var message = GetMessage();
-			message.Text = "Dodge the\ncreeps!";
-			message.Show();
+            var message = GetMessage();
+            message.Text = "Dodge the\ncreeps!";
+            message.Show();
 
-			await ToSignal(GetTree().CreateTimer(1), "timeout");
-			GetButton().Show();
-		}
+            await ToSignal(GetTree().CreateTimer(1), "timeout");
+            GetButton().Show();
+        }
 
-		public void UpdateHiScore(int hiScore)
-		{
-			GetHiScoreLabel().Text = hiScore.ToString();
-		}
+        public void UpdateHiScore(int hiScore)
+        {
+            GetHiScoreLabel().Text = hiScore.ToString();
+        }
 
-		public void UpdateScore(int score)
-		{
-			GetScoreLabel().Text = score.ToString();
-		}
+        public void UpdateScore(int score)
+        {
+            GetScoreLabel().Text = score.ToString();
+        }
 
-		public void OnStartButtonPressed()
-		{
-			GetButton().Hide();
-			EmitSignal(nameof(StartGame));
-		}
+        public void OnStartButtonPressed()
+        {
+            GetButton().Hide();
+            EmitSignal(nameof(StartGame));
+        }
 
-		public void OnMessageTimerTimeout()
-		{
-			GetMessage().Hide();
-		}
+        public void OnMessageTimerTimeout()
+        {
+            GetMessage().Hide();
+        }
 
-		private Label GetHiScoreLabel() =>
-			GetNode<Label>(HUDNodes.HiScoreLabel);
+        private Label GetHiScoreLabel() =>
+          GetNode<Label>(HUDNodes.HiScoreLabel);
 
-		private Label GetScoreLabel() =>
-		  GetNode<Label>(HUDNodes.ScoreLabel);
+        private Label GetScoreLabel() =>
+          GetNode<Label>(HUDNodes.ScoreLabel);
 
-		private Button GetButton() =>
-		  GetNode<Button>(HUDNodes.StartButton);
+        private Button GetButton() =>
+          GetNode<Button>(HUDNodes.StartButton);
 
-		private Label GetMessage() =>
-		  GetNode<Label>(HUDNodes.Message);
+        private Label GetMessage() =>
+          GetNode<Label>(HUDNodes.Message);
 
-		private Timer GetMessageTimer() =>
-		  GetNode<Timer>(HUDNodes.MessageTimer);
-	}
+        private Timer GetMessageTimer() =>
+          GetNode<Timer>(HUDNodes.MessageTimer);
+    }
 }
