@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/enemyWalking_1.png-d5ceaabc18541872d02c2adc056b0eb2.stex"
+path="res://.import/enemyFlyingAlt_1.png-b11148ed1e7eb60df243bbde1c817931.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://dodge_assets/art/enemyWalking_1.png"
-dest_files=[ "res://.import/enemyWalking_1.png-d5ceaabc18541872d02c2adc056b0eb2.stex" ]
+source_file="res://Assets/Art/enemyFlyingAlt_1.png"
+dest_files=[ "res://.import/enemyFlyingAlt_1.png-b11148ed1e7eb60df243bbde1c817931.stex" ]
 
 [params]
 

@@ -92,8 +92,8 @@ namespace Dodge
             GetScoreTimer().Start();
         }
 
-        private HUD GetHud() =>
-          GetNode<HUD>(MainNodes.Hud);
+        private Hud GetHud() =>
+          GetNode<Hud>(MainNodes.Hud);
 
         private PathFollow2D GetMobSpawnLocation() =>
            GetNode<PathFollow2D>(MainNodes.MobSpawnLocation);

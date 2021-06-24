@@ -3,7 +3,7 @@ using System;
 
 namespace Dodge
 {
-    public static class HUDNodes
+    public static class HudNodes
     {
         public static string HiScoreLabel = "HiScoreLabel";
         public static string StartButton = "StartButton";
@@ -12,7 +12,7 @@ namespace Dodge
         public static string ScoreLabel = "ScoreLabel";
     }
 
-    public class HUD : CanvasLayer
+    public class Hud : CanvasLayer
     {
         [Signal]
         public delegate void StartGame();
@@ -63,18 +63,18 @@ namespace Dodge
         }
 
         private Label GetHiScoreLabel() =>
-          GetNode<Label>(HUDNodes.HiScoreLabel);
+          GetNode<Label>(HudNodes.HiScoreLabel);
 
         private Label GetScoreLabel() =>
-          GetNode<Label>(HUDNodes.ScoreLabel);
+          GetNode<Label>(HudNodes.ScoreLabel);
 
         private Button GetButton() =>
-          GetNode<Button>(HUDNodes.StartButton);
+          GetNode<Button>(HudNodes.StartButton);
 
         private Label GetMessage() =>
-          GetNode<Label>(HUDNodes.Message);
+          GetNode<Label>(HudNodes.Message);
 
         private Timer GetMessageTimer() =>
-          GetNode<Timer>(HUDNodes.MessageTimer);
+          GetNode<Timer>(HudNodes.MessageTimer);
     }
 }
