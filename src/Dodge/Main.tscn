@@ -1,10 +1,11 @@
-[gd_scene load_steps=7 format=2]
+[gd_scene load_steps=8 format=2]
 
 [ext_resource path="res://Entities/Player/Player.tscn" type="PackedScene" id=1]
 [ext_resource path="res://Entities/Mob/Mob.tscn" type="PackedScene" id=2]
 [ext_resource path="res://Main.cs" type="Script" id=3]
 [ext_resource path="res://Entities/Hud/Hud.tscn" type="PackedScene" id=4]
 [ext_resource path="res://Assets/Sounds/gameover.wav" type="AudioStream" id=5]
+[ext_resource path="res://Assets/Music/House In a Forest Loop.ogg" type="AudioStream" id=6]
 
 [sub_resource type="Curve2D" id=1]
 _data = {
@@ -40,6 +41,9 @@ position = Vector2( -0.822998, -1.13559 )
 
 [node name="GameOverSound" type="AudioStreamPlayer" parent="."]
 stream = ExtResource( 5 )
+
+[node name="BackgroundMusic" type="AudioStreamPlayer" parent="."]
+stream = ExtResource( 6 )
 
 [connection signal="Hit" from="Player" to="." method="GameOver"]
 [connection signal="timeout" from="MobTimer" to="." method="OnMobTimerTimeout"]

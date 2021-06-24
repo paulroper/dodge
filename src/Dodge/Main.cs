@@ -5,6 +5,7 @@ namespace Dodge
 {
     public static class MainNodes
     {
+        public const string BackgroundMusic = "BackgroundMusic";
         public const string GameOverSound = "GameOverSound";
         public const string Hud = "HUD";
         public const string MobSpawnLocation = "MobPath/MobSpawnLocation";
@@ -31,6 +32,8 @@ namespace Dodge
 
         public void GameOver()
         {
+            GetBackgroundMusic().Stop();
+
             GetMobTimer().Stop();
             GetScoreTimer().Stop();
 
@@ -57,6 +60,8 @@ namespace Dodge
             var hud = GetHud();
             hud.UpdateScore(_score);
             hud.ShowMessage("Get Ready!");
+
+            GetBackgroundMusic().Play();
         }
 
         public void OnMobTimerTimeout()
@@ -94,6 +99,9 @@ namespace Dodge
             GetMobTimer().Start();
             GetScoreTimer().Start();
         }
+
+        private AudioStreamPlayer GetBackgroundMusic() =>
+            GetNode<AudioStreamPlayer>(MainNodes.BackgroundMusic);
 
         private AudioStreamPlayer GetGameOverSound() =>
             GetNode<AudioStreamPlayer>(MainNodes.GameOverSound);
