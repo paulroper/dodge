@@ -5,6 +5,7 @@ namespace Dodge
 {
     public static class MainNodes
     {
+        public const string GameOverSound = "GameOverSound";
         public const string Hud = "HUD";
         public const string MobSpawnLocation = "MobPath/MobSpawnLocation";
         public const string MobTimer = "MobTimer";
@@ -38,6 +39,8 @@ namespace Dodge
             var hud = GetHud();
             hud.UpdateHiScore(_hiScore);
             hud.ShowGameOver();
+
+            GetGameOverSound().Play();
         }
 
         public void NewGame()
@@ -91,6 +94,9 @@ namespace Dodge
             GetMobTimer().Start();
             GetScoreTimer().Start();
         }
+
+        private AudioStreamPlayer GetGameOverSound() =>
+            GetNode<AudioStreamPlayer>(MainNodes.GameOverSound);
 
         private Hud GetHud() =>
           GetNode<Hud>(MainNodes.Hud);
