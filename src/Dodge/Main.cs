@@ -77,13 +77,7 @@ namespace Dodge
 
             GetStartTimer().Start();
 
-            foreach (var child in GetChildren())
-            {
-                if (child is Mob mob)
-                {
-                    mob.QueueFree();
-                }
-            }
+            GetTree().CallGroup(MobNodes.Group, "queue_free");
 
             if (!(_activePowerUpEffects.Slowdown is null))
             {

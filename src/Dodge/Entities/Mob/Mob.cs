@@ -6,6 +6,7 @@ namespace Dodge.Entities
 {
     public static class MobNodes
     {
+        public const string Group = "Mobs";
         public const string PhysicsBody = "Mob";
         public const string Sprite = "AnimatedSprite";
     }
