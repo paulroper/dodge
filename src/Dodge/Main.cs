@@ -1,5 +1,9 @@
 using Godot;
 using System;
+using Dodge.Entities;
+using Dodge.PowerUps;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Dodge
 {
@@ -11,9 +15,12 @@ namespace Dodge
         public const string MobSpawnLocation = "MobPath/MobSpawnLocation";
         public const string MobTimer = "MobTimer";
         public const string Player = "Player";
+        public const string PowerUpSpawnTimer = "PowerUpSpawnTimer";
+        public const string Root = "Main";
         public const string ScoreTimer = "ScoreTimer";
         public const string StartPosition = "StartPosition";
         public const string StartTimer = "StartTimer";
+        public const string SlowdownPowerUpTimer = "SlowdownPowerUpTimer";
     }
 
     public class Main : Node
@@ -21,10 +28,16 @@ namespace Dodge
         [Export]
         public PackedScene Mob;
 
+        [Export]
+        public PackedScene PowerUp;
+
         private int _score;
         private int _hiScore;
+        private bool _slowdownPowerUpSpawned;
+        private IList<IPowerUpEffect> _activePowerUpEffects = new List<IPowerUpEffect>();
 
         private static readonly Random _rng = new Random();
+        private static readonly IPowerUpWizard _powerUpWizard = new PowerUpWizard();
 
         public override void _Ready()
         {
@@ -36,6 +49,8 @@ namespace Dodge
 
             GetMobTimer().Stop();
             GetScoreTimer().Stop();
+            GetPowerUpSpawnTimer().Stop();
+            GetSlowdownPowerUpTimer().Stop();
 
             _hiScore = Math.Max(_score, _hiScore);
 
@@ -57,11 +72,66 @@ namespace Dodge
 
             GetStartTimer().Start();
 
+            foreach (var child in GetChildren())
+            {
+                if (child is Mob mob)
+                {
+                    mob.QueueFree();
+                }
+            }
+
+            ResetMobSpawnTimer();
+            _activePowerUpEffects = new List<IPowerUpEffect>();
+
             var hud = GetHud();
             hud.UpdateScore(_score);
             hud.ShowMessage("Get Ready!");
 
             GetBackgroundMusic().Play();
+        }
+
+        public void SlowdownPowerUpCollected(SlowdownEffect effect)
+        {
+            GD.Print("Slowdown power-up signal triggered");
+
+            var mobTimer = GetMobTimer();
+            effect.OriginalTimerWait = mobTimer.WaitTime;
+
+            _slowdownPowerUpSpawned = false;
+
+            // Only one slowdown effect can be active at a time
+            _activePowerUpEffects = _activePowerUpEffects.Where(effect => !(effect is SlowdownEffect)).ToList();
+            _activePowerUpEffects.Add(effect);
+
+            foreach (var child in GetChildren())
+            {
+                if (child is Mob mob)
+                {
+                    _powerUpWizard.Apply(mob, _activePowerUpEffects);
+                }
+            }
+
+            _powerUpWizard.Apply(mobTimer, _activePowerUpEffects);
+
+            GetSlowdownPowerUpTimer().Start();
+        }
+
+        public void OnSlowdownPowerUpTimerTimeout()
+        {
+            GD.Print("Slowdown power-up effect over");
+
+            GetSlowdownPowerUpTimer().Stop();
+            ResetMobSpawnTimer();
+
+            foreach (var child in GetChildren())
+            {
+                if (child is Mob mob)
+                {
+                    mob.RevertVelocity();
+                }
+            }
+
+            _activePowerUpEffects = _activePowerUpEffects.Where(powerUp => !(powerUp is SlowdownEffect)).ToList();
         }
 
         public void OnMobTimerTimeout()
@@ -71,7 +141,7 @@ namespace Dodge
             mobSpawnLocation.Offset = _rng.Next();
 
             // Create a Mob instance and add it to the scene.
-            var mobInstance = Mob.Instance<RigidBody2D>();
+            var mobInstance = Mob.Instance<Mob>();
             AddChild(mobInstance);
 
             // Set the mob's direction perpendicular to the path direction.
@@ -85,7 +155,34 @@ namespace Dodge
             mobInstance.Rotation = direction;
 
             // Choose the velocity.
-            mobInstance.LinearVelocity = new Vector2(RandRange(150f, 250f), 0).Rotated(direction);
+            var velocity = RandRange(150f, 250f);
+            mobInstance.SetVelocity(new Vector2(velocity, 0).Rotated(direction));
+
+            if (_activePowerUpEffects.Count > 0)
+            {
+                _powerUpWizard.Apply(mobInstance, _activePowerUpEffects);
+            }
+        }
+
+        public void OnPowerUpSpawnTimerTimeout()
+        {
+            if (_slowdownPowerUpSpawned || _activePowerUpEffects.Any(effect => effect is SlowdownEffect))
+            {
+                return;
+            }
+
+            var powerUpInstance = PowerUp.Instance<SlowdownPowerUp>();
+            AddChild(powerUpInstance);
+
+            var screenSize = GetViewport().Size;
+
+            var powerUpX = _rng.Next(0, (int)screenSize.x);
+            var powerUpY = _rng.Next(0, (int)screenSize.y);
+
+            GD.Print($"Spawning a {powerUpInstance.GetType()} power-up at {powerUpX}, {powerUpY}");
+
+            powerUpInstance.Position = new Vector2(powerUpX, powerUpY);
+            _slowdownPowerUpSpawned = true;
         }
 
         public void OnScoreTimerTimeout()
@@ -98,13 +195,25 @@ namespace Dodge
         {
             GetMobTimer().Start();
             GetScoreTimer().Start();
+            GetPowerUpSpawnTimer().Start();
+        }
+
+        private void ResetMobSpawnTimer()
+        {
+            var mobTimer = GetMobTimer();
+            if (!(_activePowerUpEffects.FirstOrDefault(effect => effect is SlowdownEffect) is SlowdownEffect slowdownEffect))
+            {
+                return;
+            }
+
+            mobTimer.WaitTime = slowdownEffect.OriginalTimerWait;
         }
 
         private AudioStreamPlayer GetBackgroundMusic() =>
-            GetNode<AudioStreamPlayer>(MainNodes.BackgroundMusic);
+          GetNode<AudioStreamPlayer>(MainNodes.BackgroundMusic);
 
         private AudioStreamPlayer GetGameOverSound() =>
-            GetNode<AudioStreamPlayer>(MainNodes.GameOverSound);
+          GetNode<AudioStreamPlayer>(MainNodes.GameOverSound);
 
         private Hud GetHud() =>
           GetNode<Hud>(MainNodes.Hud);
@@ -114,6 +223,9 @@ namespace Dodge
 
         private Player GetPlayer() =>
           GetNode<Player>(MainNodes.Player);
+
+        private Timer GetPowerUpSpawnTimer() =>
+          GetNode<Timer>(MainNodes.PowerUpSpawnTimer);
 
         private Position2D GetStartPosition() =>
           GetNode<Position2D>(MainNodes.StartPosition);
@@ -127,10 +239,12 @@ namespace Dodge
         private Timer GetStartTimer() =>
           GetNode<Timer>(MainNodes.StartTimer);
 
+        private Timer GetSlowdownPowerUpTimer() =>
+          GetNode<Timer>(MainNodes.SlowdownPowerUpTimer);
+
         private float RandRange(float min, float max)
         {
             return (float)(_rng.NextDouble() * (max - min)) + min;
         }
     }
 }
-

@@ -1,6 +1,6 @@
 using Godot;
 
-namespace Dodge
+namespace Dodge.Entities
 {
     public static class PlayerSignals
     {
@@ -96,6 +96,11 @@ namespace Dodge
 
         public void OnPlayerBodyEntered(PhysicsBody2D body)
         {
+            if (!(body is Mob))
+            {
+                return;
+            }
+
             Hide();
             EmitSignal(PlayerSignals.Hit);
             GetHitbox().SetDeferred("disabled", true);

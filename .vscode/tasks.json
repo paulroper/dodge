@@ -6,8 +6,9 @@
     {
       "label": "build",
       "type": "shell",
-      "command": "msbuild",
+      "command": "dotnet",
       "args": [
+        "msbuild",
         "./src/Dodge/Dodge.sln",
         // Ask msbuild to generate full paths for file names.
         "/property:GenerateFullPaths=true",
