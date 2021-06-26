@@ -34,7 +34,7 @@ namespace Dodge
         private int _score;
         private int _hiScore;
         private bool _slowdownPowerUpSpawned;
-        private IList<IPowerUpEffect> _activePowerUpEffects = new List<IPowerUpEffect>();
+        private readonly ActivePowerUpEffects _activePowerUpEffects = new ActivePowerUpEffects();
 
         private static readonly Random _rng = new Random();
         private static readonly IPowerUpWizard _powerUpWizard = new PowerUpWizard();
@@ -81,7 +81,7 @@ namespace Dodge
             }
 
             ResetMobSpawnTimer();
-            _activePowerUpEffects = new List<IPowerUpEffect>();
+            _activePowerUpEffects.Clear();
 
             var hud = GetHud();
             hud.UpdateScore(_score);
@@ -100,8 +100,7 @@ namespace Dodge
             _slowdownPowerUpSpawned = false;
 
             // Only one slowdown effect can be active at a time
-            _activePowerUpEffects = _activePowerUpEffects.Where(effect => !(effect is SlowdownEffect)).ToList();
-            _activePowerUpEffects.Add(effect);
+            _activePowerUpEffects.Slowdown = effect;
 
             foreach (var child in GetChildren())
             {
@@ -131,7 +130,7 @@ namespace Dodge
                 }
             }
 
-            _activePowerUpEffects = _activePowerUpEffects.Where(powerUp => !(powerUp is SlowdownEffect)).ToList();
+            _activePowerUpEffects.Slowdown = null;
         }
 
         public void OnMobTimerTimeout()
@@ -166,7 +165,7 @@ namespace Dodge
 
         public void OnPowerUpSpawnTimerTimeout()
         {
-            if (_slowdownPowerUpSpawned || _activePowerUpEffects.Any(effect => effect is SlowdownEffect))
+            if (_slowdownPowerUpSpawned || !(_activePowerUpEffects.Slowdown is null))
             {
                 return;
             }
@@ -201,7 +200,9 @@ namespace Dodge
         private void ResetMobSpawnTimer()
         {
             var mobTimer = GetMobTimer();
-            if (!(_activePowerUpEffects.FirstOrDefault(effect => effect is SlowdownEffect) is SlowdownEffect slowdownEffect))
+
+            var slowdownEffect = _activePowerUpEffects.Slowdown;
+            if (slowdownEffect is null)
             {
                 return;
             }

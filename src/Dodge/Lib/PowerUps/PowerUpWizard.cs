@@ -1,47 +1,48 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using Dodge.Entities;
+﻿using Dodge.Entities;
 using Godot;
 
 namespace Dodge.PowerUps
 {
     public class PowerUpWizard : IPowerUpWizard
     {
-        public IList<IPowerUpEffect> Apply(Node node, IList<IPowerUpEffect> effects)
+        public bool Apply(Node node, ActivePowerUpEffects effects)
         {
             return node switch
             {
                 Mob mob => ApplyMobEffects(mob, effects),
                 Timer timer => ApplyTimerEffects(timer, effects),
-                _ => effects
+                _ => false
             };
         }
 
-        private IList<IPowerUpEffect> ApplyMobEffects(Mob mob, IList<IPowerUpEffect> effects)
+        private bool ApplyMobEffects(Mob mob, ActivePowerUpEffects effects)
         {
-            if (!(effects.LastOrDefault(effects => effects is SlowdownEffect) is SlowdownEffect slowdownEffect))
+            var slowdownEffect = effects.Slowdown;
+            if (slowdownEffect is null)
             {
-                return new List<IPowerUpEffect>();
+                return false;
             }
+
 
             mob.LinearVelocity = new Vector2(
                 mob.LinearVelocity.x * slowdownEffect.VelocityModifier,
                 mob.LinearVelocity.y * slowdownEffect.VelocityModifier
             );
 
-            return new List<IPowerUpEffect>() { slowdownEffect };
+            return true;
         }
 
-        private IList<IPowerUpEffect> ApplyTimerEffects(Timer timer, IList<IPowerUpEffect> effects)
+        private bool ApplyTimerEffects(Timer timer, ActivePowerUpEffects effects)
         {
-            if (!(effects.LastOrDefault(effects => effects is SlowdownEffect) is SlowdownEffect slowdownEffect))
+            var slowdownEffect = effects.Slowdown;
+            if (slowdownEffect is null)
             {
-                return new List<IPowerUpEffect>();
+                return false;
             }
 
             timer.WaitTime *= slowdownEffect.TimerModifier;
 
-            return new List<IPowerUpEffect>() { slowdownEffect };
+            return true;
         }
     }
 }
