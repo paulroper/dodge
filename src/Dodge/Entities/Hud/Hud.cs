@@ -17,6 +17,14 @@ namespace Dodge
         [Signal]
         public delegate void StartGame();
 
+        public override void _Input(InputEvent inputEvent)
+        {
+            if (GetButton().Visible && inputEvent.IsActionPressed(InputMap.Start))
+            {
+                OnStartButtonPressed();
+            }
+        }
+
         public void ShowMessage(string text)
         {
             var message = GetMessage();
