@@ -1,8 +1,7 @@
 namespace Dodge.PowerUps
 {
-    public class SlowdownEffect : Godot.Object, IPowerUpEffect
+    public class SlowdownEffect : Godot.Object
     {
-        public float OriginalTimerWait { get; set; }
         public float TimerModifier { get; }
         public float VelocityModifier { get; }
 

@@ -1,4 +1,5 @@
 using System;
+using Dodge.PowerUps;
 using Godot;
 
 namespace Dodge.Entities
@@ -33,13 +34,16 @@ namespace Dodge.Entities
             QueueFree();
         }
 
-        public void SetVelocity(Vector2 velocity)
+        public void OnSlowdownPowerUpActive(SlowdownEffect effect)
         {
-            _originalVector = velocity;
-            LinearVelocity = velocity;
+            _originalVector = LinearVelocity;
+            LinearVelocity = new Vector2(
+                LinearVelocity.x * effect.VelocityModifier,
+                LinearVelocity.y * effect.VelocityModifier
+            );
         }
 
-        public void RevertVelocity()
+        public void OnSlowdownPowerUpEnded()
         {
             LinearVelocity = _originalVector;
         }

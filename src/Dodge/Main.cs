@@ -31,13 +31,18 @@ namespace Dodge
         [Export]
         public PackedScene PowerUp;
 
+        [Signal]
+        public delegate void SlowdownPowerUpActive(SlowdownEffect effect);
+
+        [Signal]
+        public delegate void SlowdownPowerUpEnded();
+
         private int _score;
         private int _hiScore;
         private bool _slowdownPowerUpSpawned;
         private readonly ActivePowerUpEffects _activePowerUpEffects = new ActivePowerUpEffects();
 
         private static readonly Random _rng = new Random();
-        private static readonly IPowerUpWizard _powerUpWizard = new PowerUpWizard();
 
         public override void _Ready()
         {
@@ -80,7 +85,11 @@ namespace Dodge
                 }
             }
 
-            ResetMobSpawnTimer();
+            if (!(_activePowerUpEffects.Slowdown is null))
+            {
+                EmitSignal(nameof(SlowdownPowerUpEnded));
+            }
+
             _activePowerUpEffects.Clear();
 
             var hud = GetHud();
@@ -94,25 +103,13 @@ namespace Dodge
         {
             GD.Print("Slowdown power-up signal triggered");
 
-            var mobTimer = GetMobTimer();
-            effect.OriginalTimerWait = mobTimer.WaitTime;
-
             _slowdownPowerUpSpawned = false;
 
             // Only one slowdown effect can be active at a time
             _activePowerUpEffects.Slowdown = effect;
 
-            foreach (var child in GetChildren())
-            {
-                if (child is Mob mob)
-                {
-                    _powerUpWizard.Apply(mob, _activePowerUpEffects);
-                }
-            }
-
-            _powerUpWizard.Apply(mobTimer, _activePowerUpEffects);
-
             GetSlowdownPowerUpTimer().Start();
+            EmitSignal(nameof(SlowdownPowerUpActive), effect);
         }
 
         public void OnSlowdownPowerUpTimerTimeout()
@@ -120,17 +117,9 @@ namespace Dodge
             GD.Print("Slowdown power-up effect over");
 
             GetSlowdownPowerUpTimer().Stop();
-            ResetMobSpawnTimer();
-
-            foreach (var child in GetChildren())
-            {
-                if (child is Mob mob)
-                {
-                    mob.RevertVelocity();
-                }
-            }
 
             _activePowerUpEffects.Slowdown = null;
+            EmitSignal(nameof(SlowdownPowerUpEnded));
         }
 
         public void OnMobTimerTimeout()
@@ -142,6 +131,9 @@ namespace Dodge
             // Create a Mob instance and add it to the scene.
             var mobInstance = Mob.Instance<Mob>();
             AddChild(mobInstance);
+
+            Connect(nameof(SlowdownPowerUpActive), mobInstance, nameof(Entities.Mob.OnSlowdownPowerUpActive));
+            Connect(nameof(SlowdownPowerUpEnded), mobInstance, nameof(Entities.Mob.OnSlowdownPowerUpEnded));
 
             // Set the mob's direction perpendicular to the path direction.
             var direction = (mobSpawnLocation.Rotation + Mathf.Pi) / 2;
@@ -155,11 +147,11 @@ namespace Dodge
 
             // Choose the velocity.
             var velocity = RandRange(150f, 250f);
-            mobInstance.SetVelocity(new Vector2(velocity, 0).Rotated(direction));
+            mobInstance.LinearVelocity = new Vector2(velocity, 0).Rotated(direction);
 
-            if (_activePowerUpEffects.Count > 0)
+            if (!(_activePowerUpEffects.Slowdown is null))
             {
-                _powerUpWizard.Apply(mobInstance, _activePowerUpEffects);
+                mobInstance.OnSlowdownPowerUpActive(_activePowerUpEffects.Slowdown);
             }
         }
 
@@ -195,19 +187,6 @@ namespace Dodge
             GetMobTimer().Start();
             GetScoreTimer().Start();
             GetPowerUpSpawnTimer().Start();
-        }
-
-        private void ResetMobSpawnTimer()
-        {
-            var mobTimer = GetMobTimer();
-
-            var slowdownEffect = _activePowerUpEffects.Slowdown;
-            if (slowdownEffect is null)
-            {
-                return;
-            }
-
-            mobTimer.WaitTime = slowdownEffect.OriginalTimerWait;
         }
 
         private AudioStreamPlayer GetBackgroundMusic() =>
