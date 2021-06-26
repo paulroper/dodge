@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=2]
+[gd_scene load_steps=9 format=2]
 
 [ext_resource path="res://Entities/Hud/Hud.cs" type="Script" id=1]
 [ext_resource path="res://Assets/Fonts/Xolonium-Regular.ttf" type="DynamicFontData" id=2]
@@ -15,7 +15,13 @@ font_data = ExtResource( 2 )
 size = 64
 font_data = ExtResource( 2 )
 
-[sub_resource type="DynamicFont" id=4]
+[sub_resource type="InputEventAction" id=4]
+action = "ui_accept"
+
+[sub_resource type="ShortCut" id=5]
+shortcut = SubResource( 4 )
+
+[sub_resource type="DynamicFont" id=6]
 size = 32
 font_data = ExtResource( 2 )
 
@@ -62,6 +68,7 @@ margin_top = -161.622
 margin_right = -104.755
 margin_bottom = -77.6216
 custom_fonts/font = SubResource( 3 )
+shortcut = SubResource( 5 )
 text = "Start"
 __meta__ = {
 "_edit_use_anchors_": false
@@ -76,7 +83,7 @@ margin_left = 100.0
 margin_top = -0.946014
 margin_right = 203.486
 margin_bottom = 38.054
-custom_fonts/font = SubResource( 4 )
+custom_fonts/font = SubResource( 6 )
 text = "Score:"
 __meta__ = {
 "_edit_use_anchors_": false
@@ -87,7 +94,7 @@ margin_left = 100.0
 margin_top = 43.2978
 margin_right = 287.402
 margin_bottom = 82.2978
-custom_fonts/font = SubResource( 4 )
+custom_fonts/font = SubResource( 6 )
 text = "High Score:"
 __meta__ = {
 "_edit_use_anchors_": false
