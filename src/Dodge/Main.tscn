@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3 uid="uid://d01wdbi0hnqvj"]
+[gd_scene load_steps=12 format=3 uid="uid://d01wdbi0hnqvj"]
 
 [ext_resource type="PackedScene" path="res://Entities/Player/Player.tscn" id="1"]
 [ext_resource type="PackedScene" path="res://Entities/Mob/Mob.tscn" id="2"]
@@ -9,6 +9,7 @@
 [ext_resource type="Texture2D" uid="uid://cfm0dc51401oe" path="res://Assets/Art/bg.jpg" id="7"]
 [ext_resource type="PackedScene" path="res://Entities/SlowdownPowerUp/SlowdownPowerUp.tscn" id="8"]
 [ext_resource type="Script" path="res://Entities/MobTimer/MobTimer.cs" id="9"]
+[ext_resource type="Script" path="res://Entities/BackgroundMusic/BackgroundMusic.cs" id="10_knf6t"]
 
 [sub_resource type="Curve2D" id="1"]
 _data = {
@@ -61,6 +62,7 @@ stream = ExtResource("5")
 
 [node name="BackgroundMusic" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("6")
+script = ExtResource("10_knf6t")
 
 [connection signal="timeout" from="MobTimer" to="." method="OnMobTimerTimeout"]
 [connection signal="timeout" from="ScoreTimer" to="." method="OnScoreTimerTimeout"]

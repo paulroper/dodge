@@ -1,222 +1,233 @@
 using System;
 using Dodge.Entities;
-using Dodge.PowerUps;
+using Dodge.Lib.PowerUps;
 using Godot;
 
-namespace Dodge
+namespace Dodge;
+
+public static class MainNodes
 {
-    public static class MainNodes
-    {
-        public const string BackgroundMusic = "BackgroundMusic";
-        public const string GameOverSound = "GameOverSound";
-        public const string Hud = "HUD";
-        public const string MobSpawnLocation = "MobPath/MobSpawnLocation";
-        public const string MobTimer = "MobTimer";
-        public const string Player = "Player";
-        public const string PowerUpSpawnTimer = "PowerUpSpawnTimer";
-        public const string Root = "Main";
-        public const string ScoreTimer = "ScoreTimer";
-        public const string StartPosition = "StartPosition";
-        public const string StartTimer = "StartTimer";
-        public const string SlowdownPowerUpTimer = "SlowdownPowerUpTimer";
-    }
+	public const string BackgroundMusic = "BackgroundMusic";
+	public const string GameOverSound = "GameOverSound";
+	public const string Hud = "HUD";
+	public const string MobSpawnLocation = "MobPath/MobSpawnLocation";
+	public const string MobTimer = "MobTimer";
+	public const string Player = "Player";
+	public const string PowerUpSpawnTimer = "PowerUpSpawnTimer";
+	public const string Root = "Main";
+	public const string ScoreTimer = "ScoreTimer";
+	public const string StartPosition = "StartPosition";
+	public const string StartTimer = "StartTimer";
+	public const string SlowdownPowerUpTimer = "SlowdownPowerUpTimer";
+}
 
-    public partial class Main : Node
-    {
-        [Export]
-        public PackedScene Mob;
+public partial class Main : Node
+{
+	[Export]
+	public PackedScene Mob;
 
-        [Export]
-        public PackedScene PowerUp;
+	[Export]
+	public PackedScene PowerUp;
 
-        private int _score;
-        private int _hiScore;
-        private bool _slowdownPowerUpSpawned;
-        private readonly ActivePowerUpEffects _activePowerUpEffects = new();
+	[Signal]
+	public delegate void SlowdownPowerUpActiveEventHandler(SlowdownEffect effect);
 
-        private static readonly Random _rng = new();
+	[Signal]
+	public delegate void SlowdownPowerUpEndedEventHandler();
 
-        public override void _Ready()
-        {
-            var hud = GetNode<Hud>(MainNodes.Hud);
-            hud.StartGame += NewGame;
+	private int _score;
+	private int _hiScore;
+	private bool _slowdownPowerUpSpawned;
+	private readonly ActivePowerUpEffects _activePowerUpEffects = new();
 
-            var player = GetNode<Player>(MainNodes.Player);
-            player.Hit += GameOver;
-        }
+	private static readonly Random _rng = new();
 
-        public void GameOver()
-        {
-            GetBackgroundMusic().Stop();
+	public override void _Ready()
+	{
+		var hud = GetHud();
+		hud.StartGame += NewGame;
 
-            GetMobTimer().Stop();
-            GetScoreTimer().Stop();
-            GetPowerUpSpawnTimer().Stop();
-            GetSlowdownPowerUpTimer().Stop();
+		var player = GetPlayer();
+		player.Hit += GameOver;
 
-            _hiScore = Math.Max(_score, _hiScore);
+		var backgroundMusic = GetBackgroundMusic();
+		SlowdownPowerUpActive += backgroundMusic.OnSlowdownPowerUpActive;
+		SlowdownPowerUpEnded += backgroundMusic.OnSlowdownPowerUpEnded;
+	}
 
-            var hud = GetHud();
-            hud.UpdateHiScore(_hiScore);
-            hud.ShowGameOver();
+	public void GameOver()
+	{
+		GetBackgroundMusic().Stop();
 
-            GetGameOverSound().Play();
-        }
+		GetMobTimer().Stop();
+		GetScoreTimer().Stop();
+		GetPowerUpSpawnTimer().Stop();
+		GetSlowdownPowerUpTimer().Stop();
 
-        public void NewGame()
-        {
-            _score = 0;
+		_hiScore = Math.Max(_score, _hiScore);
 
-            var player = GetPlayer();
-            var startPosition = GetStartPosition();
+		var hud = GetHud();
+		hud.UpdateHiScore(_hiScore);
+		hud.ShowGameOver();
 
-            player.Start(startPosition.Position);
+		GetGameOverSound().Play();
+	}
 
-            GetStartTimer().Start();
+	public void NewGame()
+	{
+		_score = 0;
 
-            GetTree().CallGroup(MobNodes.Group, "queue_free");
+		var player = GetPlayer();
+		var startPosition = GetStartPosition();
 
-            if (_activePowerUpEffects.Slowdown is not null)
-            {
-                EmitSignal(SlowdownPowerUpSignals.Ended);
-            }
+		player.Start(startPosition.Position);
 
-            _activePowerUpEffects.Clear();
+		GetStartTimer().Start();
 
-            var hud = GetHud();
-            hud.UpdateScore(_score);
-            hud.ShowMessage("Get Ready!");
+		GetTree().CallGroup(MobNodes.Group, "queue_free");
 
-            GetBackgroundMusic().Play();
-        }
+		if (_activePowerUpEffects.Slowdown is not null)
+		{
+			EmitSignal(SlowdownPowerUpSignals.Ended);
+		}
 
-        public void OnSlowdownPowerUpCollected(SlowdownEffect effect)
-        {
-            GD.Print("Slowdown power-up signal triggered");
+		_activePowerUpEffects.Clear();
 
-            _slowdownPowerUpSpawned = false;
+		var hud = GetHud();
+		hud.UpdateScore(_score);
+		hud.ShowMessage("Get Ready!");
 
-            // Only one slowdown effect can be active at a time
-            _activePowerUpEffects.Slowdown = effect;
+		GetBackgroundMusic().Play();
+	}
 
-            GetSlowdownPowerUpTimer().Start();
-            EmitSignal(SlowdownPowerUpSignals.Active, effect);
-        }
+	public void OnSlowdownPowerUpCollected(SlowdownEffect effect)
+	{
+		GD.Print("Slowdown power-up signal triggered");
 
-        public void OnSlowdownPowerUpTimerTimeout()
-        {
-            GD.Print("Slowdown power-up effect over");
+		_slowdownPowerUpSpawned = false;
 
-            GetSlowdownPowerUpTimer().Stop();
+		// Only one slowdown effect can be active at a time
+		_activePowerUpEffects.Slowdown = effect;
 
-            _activePowerUpEffects.Slowdown = null;
+		GetSlowdownPowerUpTimer().Start();
+		EmitSignal(SlowdownPowerUpSignals.Active, effect);
+	}
 
-            EmitSignal(SlowdownPowerUpSignals.Ended);
-        }
+	public void OnSlowdownPowerUpTimerTimeout()
+	{
+		GD.Print("Slowdown power-up effect over");
 
-        public void OnMobTimerTimeout()
-        {
-            // Choose a random location on Path2D.
-            var mobSpawnLocation = GetMobSpawnLocation();
-            mobSpawnLocation.Progress = _rng.Next();
+		GetSlowdownPowerUpTimer().Stop();
 
-            // Create a Mob instance and add it to the scene.
-            var mobInstance = Mob.Instantiate<Mob>();
-            AddChild(mobInstance);
+		_activePowerUpEffects.Slowdown = null;
 
-            mobInstance.SlowdownPowerUpActive += mobInstance.OnSlowdownPowerUpActive;
-            mobInstance.SlowdownPowerUpEnded += mobInstance.OnSlowdownPowerUpEnded;
+		EmitSignal(SlowdownPowerUpSignals.Ended);
+	}
 
-            // Set the mob's direction perpendicular to the path direction.
-            var direction = (mobSpawnLocation.Rotation + Mathf.Pi) / 2;
+	public void OnMobTimerTimeout()
+	{
+		// Choose a random location on Path2D.
+		var mobSpawnLocation = GetMobSpawnLocation();
+		mobSpawnLocation.Progress = _rng.Next();
 
-            // Set the mob's position to a random location.
-            mobInstance.Position = mobSpawnLocation.Position;
+		// Create a Mob instance and add it to the scene.
+		var mobInstance = Mob.Instantiate<Mob>();
+		AddChild(mobInstance);
 
-            // Add some randomness to the direction.
-            direction += RandfRange(-Mathf.Pi / 4, Mathf.Pi / 4);
-            mobInstance.Rotation = direction;
+		SlowdownPowerUpActive += mobInstance.OnSlowdownPowerUpActive;
+		SlowdownPowerUpEnded += mobInstance.OnSlowdownPowerUpEnded;
 
-            // Choose the velocity.
-            var velocity = RandfRange(150f, 250f);
-            mobInstance.LinearVelocity = new Vector2(velocity, 0).Rotated(direction);
+		// Set the mob's direction perpendicular to the path direction.
+		var direction = (mobSpawnLocation.Rotation + Mathf.Pi) / 2;
 
-            if (_activePowerUpEffects.Slowdown is not null)
-            {
-                mobInstance.OnSlowdownPowerUpActive(_activePowerUpEffects.Slowdown);
-            }
-        }
+		// Set the mob's position to a random location.
+		mobInstance.Position = mobSpawnLocation.Position;
 
-        public void OnPowerUpSpawnTimerTimeout()
-        {
-            if (_slowdownPowerUpSpawned || _activePowerUpEffects.Slowdown is not null)
-            {
-                return;
-            }
+		// Add some randomness to the direction.
+		direction += RandfRange(-Mathf.Pi / 4, Mathf.Pi / 4);
+		mobInstance.Rotation = direction;
 
-            var powerUpInstance = PowerUp.Instantiate<SlowdownPowerUp>();
-            AddChild(powerUpInstance);
+		// Choose the velocity.
+		var velocity = RandfRange(150f, 250f);
+		mobInstance.LinearVelocity = new Vector2(velocity, 0).Rotated(direction);
 
-            var screenSize = GetViewport().GetVisibleRect().Size;
+		if (_activePowerUpEffects.Slowdown is not null)
+		{
+			mobInstance.OnSlowdownPowerUpActive(_activePowerUpEffects.Slowdown);
+		}
+	}
 
-            var powerUpX = _rng.Next(0, (int)screenSize.X);
-            var powerUpY = _rng.Next(0, (int)screenSize.Y);
+	public void OnPowerUpSpawnTimerTimeout()
+	{
+		if (_slowdownPowerUpSpawned || _activePowerUpEffects.Slowdown is not null)
+		{
+			return;
+		}
 
-            GD.Print($"Spawning a {powerUpInstance.GetType()} power-up at {powerUpX}, {powerUpY}");
+		var powerUpInstance = PowerUp.Instantiate<SlowdownPowerUp>();
+		AddChild(powerUpInstance);
 
-            powerUpInstance.Position = new Vector2(powerUpX, powerUpY);
-            _slowdownPowerUpSpawned = true;
-        }
+		powerUpInstance.SlowdownPowerUpCollected += () => OnSlowdownPowerUpCollected(powerUpInstance.Effect);
 
-        public void OnScoreTimerTimeout()
-        {
-            _score++;
-            GetHud().UpdateScore(_score);
-        }
+		var screenSize = GetViewport().GetVisibleRect().Size;
 
-        public void OnStartTimerTimeout()
-        {
-            GetMobTimer().Start();
-            GetScoreTimer().Start();
-            GetPowerUpSpawnTimer().Start();
-        }
+		var powerUpX = _rng.Next(0, (int)screenSize.X);
+		var powerUpY = _rng.Next(0, (int)screenSize.Y);
 
-        private AudioStreamPlayer GetBackgroundMusic() =>
-          GetNode<AudioStreamPlayer>(MainNodes.BackgroundMusic);
+		GD.Print($"Spawning a {powerUpInstance.GetType()} power-up at {powerUpX}, {powerUpY}");
 
-        private AudioStreamPlayer GetGameOverSound() =>
-          GetNode<AudioStreamPlayer>(MainNodes.GameOverSound);
+		powerUpInstance.Position = new Vector2(powerUpX, powerUpY);
+		_slowdownPowerUpSpawned = true;
+	}
 
-        private Hud GetHud() =>
-          GetNode<Hud>(MainNodes.Hud);
+	public void OnScoreTimerTimeout()
+	{
+		_score++;
+		GetHud().UpdateScore(_score);
+	}
 
-        private PathFollow2D GetMobSpawnLocation() =>
-           GetNode<PathFollow2D>(MainNodes.MobSpawnLocation);
+	public void OnStartTimerTimeout()
+	{
+		GetMobTimer().Start();
+		GetScoreTimer().Start();
+		GetPowerUpSpawnTimer().Start();
+	}
 
-        private Player GetPlayer() =>
-          GetNode<Player>(MainNodes.Player);
+	private BackgroundMusic GetBackgroundMusic() =>
+	  GetNode<BackgroundMusic>(MainNodes.BackgroundMusic);
 
-        private Timer GetPowerUpSpawnTimer() =>
-          GetNode<Timer>(MainNodes.PowerUpSpawnTimer);
+	private AudioStreamPlayer GetGameOverSound() =>
+	  GetNode<AudioStreamPlayer>(MainNodes.GameOverSound);
 
-        private Marker2D GetStartPosition() =>
-          GetNode<Marker2D>(MainNodes.StartPosition);
+	private Hud GetHud() =>
+	  GetNode<Hud>(MainNodes.Hud);
 
-        private Timer GetMobTimer() =>
-          GetNode<Timer>(MainNodes.MobTimer);
+	private PathFollow2D GetMobSpawnLocation() =>
+	   GetNode<PathFollow2D>(MainNodes.MobSpawnLocation);
 
-        private Timer GetScoreTimer() =>
-          GetNode<Timer>(MainNodes.ScoreTimer);
+	private Player GetPlayer() =>
+	  GetNode<Player>(MainNodes.Player);
 
-        private Timer GetStartTimer() =>
-          GetNode<Timer>(MainNodes.StartTimer);
+	private Timer GetPowerUpSpawnTimer() =>
+	  GetNode<Timer>(MainNodes.PowerUpSpawnTimer);
 
-        private Timer GetSlowdownPowerUpTimer() =>
-          GetNode<Timer>(MainNodes.SlowdownPowerUpTimer);
+	private Marker2D GetStartPosition() =>
+	  GetNode<Marker2D>(MainNodes.StartPosition);
 
-        private static float RandfRange(float min, float max)
-        {
-            return (float)(_rng.NextDouble() * (max - min)) + min;
-        }
-    }
+	private Timer GetMobTimer() =>
+	  GetNode<Timer>(MainNodes.MobTimer);
+
+	private Timer GetScoreTimer() =>
+	  GetNode<Timer>(MainNodes.ScoreTimer);
+
+	private Timer GetStartTimer() =>
+	  GetNode<Timer>(MainNodes.StartTimer);
+
+	private Timer GetSlowdownPowerUpTimer() =>
+	  GetNode<Timer>(MainNodes.SlowdownPowerUpTimer);
+
+	private static float RandfRange(float min, float max)
+	{
+		return (float)(_rng.NextDouble() * (max - min)) + min;
+	}
 }
