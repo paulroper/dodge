@@ -15,6 +15,7 @@ modules/
 .ionide/
 .mono/
 .import/
+.godot/
 
 # File extensions
 *.aps

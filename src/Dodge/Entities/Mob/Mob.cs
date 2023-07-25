@@ -7,13 +7,19 @@ namespace Dodge.Entities
     public static class MobNodes
     {
         public const string Group = "Mobs";
-        public const string PhysicsBody = "Mob";
-        public const string Sprite = "AnimatedSprite";
+        public const string PhysicsBody3D = "Mob";
+        public const string Sprite2D = "AnimatedSprite2D";
     }
 
-    public class Mob : RigidBody2D
+    public partial class Mob : RigidBody2D
     {
-        private static readonly Random _rng = new Random();
+        [Signal]
+        public delegate void SlowdownPowerUpActiveEventHandler(SlowdownEffect effect);
+
+        [Signal]
+        public delegate void SlowdownPowerUpEndedEventHandler();
+
+        private static readonly Random _rng = new();
         private Vector2 _originalVector;
 
         [Export]
@@ -26,7 +32,7 @@ namespace Dodge.Entities
         {
             var sprite = GetSprite();
 
-            var mobTypes = sprite.Frames.GetAnimationNames();
+            var mobTypes = sprite.SpriteFrames.GetAnimationNames();
             sprite.Animation = mobTypes[_rng.Next(0, mobTypes.Length)];
         }
 
@@ -39,8 +45,8 @@ namespace Dodge.Entities
         {
             _originalVector = LinearVelocity;
             LinearVelocity = new Vector2(
-                LinearVelocity.x * effect.VelocityModifier,
-                LinearVelocity.y * effect.VelocityModifier
+                LinearVelocity.X * effect.VelocityModifier,
+                LinearVelocity.Y * effect.VelocityModifier
             );
         }
 
@@ -49,7 +55,7 @@ namespace Dodge.Entities
             LinearVelocity = _originalVector;
         }
 
-        private AnimatedSprite GetSprite() =>
-          GetNode<AnimatedSprite>(MobNodes.Sprite);
+        private AnimatedSprite2D GetSprite() =>
+          GetNode<AnimatedSprite2D>(MobNodes.Sprite2D);
     }
 }

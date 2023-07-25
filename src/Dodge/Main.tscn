@@ -1,39 +1,37 @@
-[gd_scene load_steps=11 format=2]
+[gd_scene load_steps=11 format=3 uid="uid://d01wdbi0hnqvj"]
 
-[ext_resource path="res://Entities/Player/Player.tscn" type="PackedScene" id=1]
-[ext_resource path="res://Entities/Mob/Mob.tscn" type="PackedScene" id=2]
-[ext_resource path="res://Main.cs" type="Script" id=3]
-[ext_resource path="res://Entities/Hud/Hud.tscn" type="PackedScene" id=4]
-[ext_resource path="res://Assets/Sounds/gameover.wav" type="AudioStream" id=5]
-[ext_resource path="res://Assets/Music/House In a Forest Loop.ogg" type="AudioStream" id=6]
-[ext_resource path="res://Assets/Art/bg.jpg" type="Texture" id=7]
-[ext_resource path="res://Entities/SlowdownPowerUp/SlowdownPowerUp.tscn" type="PackedScene" id=8]
-[ext_resource path="res://Entities/MobTimer/MobTimer.cs" type="Script" id=9]
+[ext_resource type="PackedScene" path="res://Entities/Player/Player.tscn" id="1"]
+[ext_resource type="PackedScene" path="res://Entities/Mob/Mob.tscn" id="2"]
+[ext_resource type="Script" path="res://Main.cs" id="3"]
+[ext_resource type="PackedScene" uid="uid://io4ehvhps1um" path="res://Entities/Hud/Hud.tscn" id="4"]
+[ext_resource type="AudioStream" uid="uid://6h0pbe5cy3as" path="res://Assets/Sounds/gameover.wav" id="5"]
+[ext_resource type="AudioStream" uid="uid://b8q8fp0j68fyf" path="res://Assets/Music/House In a Forest Loop.ogg" id="6"]
+[ext_resource type="Texture2D" uid="uid://cfm0dc51401oe" path="res://Assets/Art/bg.jpg" id="7"]
+[ext_resource type="PackedScene" path="res://Entities/SlowdownPowerUp/SlowdownPowerUp.tscn" id="8"]
+[ext_resource type="Script" path="res://Entities/MobTimer/MobTimer.cs" id="9"]
 
-[sub_resource type="Curve2D" id=1]
+[sub_resource type="Curve2D" id="1"]
 _data = {
-"points": PoolVector2Array( 0, 0, 0, 0, -0.822998, -1.13559, 0, 0, 0, 0, 479.114, -1.13559, 0, 0, 0, 0, 478.054, 720.359, 0, 0, 0, 0, -1.88245, 719.299, 0, 0, 0, 0, -0.822998, -1.13559 )
+"points": PackedVector2Array(0, 0, 0, 0, -0.822998, -1.13559, 0, 0, 0, 0, 479.114, -1.13559, 0, 0, 0, 0, 478.054, 720.359, 0, 0, 0, 0, -1.88245, 719.299, 0, 0, 0, 0, -0.822998, -1.13559)
 }
+point_count = 5
 
 [node name="Main" type="Node"]
-script = ExtResource( 3 )
-Mob = ExtResource( 2 )
-PowerUp = ExtResource( 8 )
+script = ExtResource("3")
+Mob = ExtResource("2")
+PowerUp = ExtResource("8")
 
 [node name="TextureRect" type="TextureRect" parent="."]
-margin_right = 480.0
-margin_bottom = 720.0
-texture = ExtResource( 7 )
-__meta__ = {
-"_edit_use_anchors_": false
-}
+offset_right = 480.0
+offset_bottom = 720.0
+texture = ExtResource("7")
 
-[node name="Player" parent="." instance=ExtResource( 1 )]
-position = Vector2( 240.508, 453.96 )
+[node name="Player" parent="." instance=ExtResource("1")]
+position = Vector2(240.508, 453.96)
 
 [node name="MobTimer" type="Timer" parent="."]
 wait_time = 0.5
-script = ExtResource( 9 )
+script = ExtResource("9")
 
 [node name="ScoreTimer" type="Timer" parent="."]
 
@@ -47,26 +45,23 @@ one_shot = true
 [node name="SlowdownPowerUpTimer" type="Timer" parent="."]
 wait_time = 6.0
 
-[node name="StartPosition" type="Position2D" parent="."]
-position = Vector2( 240, 450 )
+[node name="StartPosition" type="Marker2D" parent="."]
+position = Vector2(240, 450)
 
 [node name="MobPath" type="Path2D" parent="."]
-curve = SubResource( 1 )
+curve = SubResource("1")
 
 [node name="MobSpawnLocation" type="PathFollow2D" parent="MobPath"]
-position = Vector2( -0.822998, -1.13559 )
+position = Vector2(-0.822998, -1.13559)
 
-[node name="HUD" parent="." instance=ExtResource( 4 )]
+[node name="HUD" parent="." instance=ExtResource("4")]
 
 [node name="GameOverSound" type="AudioStreamPlayer" parent="."]
-stream = ExtResource( 5 )
+stream = ExtResource("5")
 
 [node name="BackgroundMusic" type="AudioStreamPlayer" parent="."]
-stream = ExtResource( 6 )
+stream = ExtResource("6")
 
-[connection signal="SlowdownPowerUpActive" from="." to="MobTimer" method="OnSlowdownPowerUpActive"]
-[connection signal="SlowdownPowerUpEnded" from="." to="MobTimer" method="OnSlowdownPowerUpEnded"]
-[connection signal="Hit" from="Player" to="." method="GameOver"]
 [connection signal="timeout" from="MobTimer" to="." method="OnMobTimerTimeout"]
 [connection signal="timeout" from="ScoreTimer" to="." method="OnScoreTimerTimeout"]
 [connection signal="timeout" from="PowerUpSpawnTimer" to="." method="OnPowerUpSpawnTimerTimeout"]

@@ -1,9 +1,7 @@
-using Godot;
 using System;
 using Dodge.Entities;
 using Dodge.PowerUps;
-using System.Collections.Generic;
-using System.Linq;
+using Godot;
 
 namespace Dodge
 {
@@ -23,7 +21,7 @@ namespace Dodge
         public const string SlowdownPowerUpTimer = "SlowdownPowerUpTimer";
     }
 
-    public class Main : Node
+    public partial class Main : Node
     {
         [Export]
         public PackedScene Mob;
@@ -31,21 +29,20 @@ namespace Dodge
         [Export]
         public PackedScene PowerUp;
 
-        [Signal]
-        public delegate void SlowdownPowerUpActive(SlowdownEffect effect);
-
-        [Signal]
-        public delegate void SlowdownPowerUpEnded();
-
         private int _score;
         private int _hiScore;
         private bool _slowdownPowerUpSpawned;
-        private readonly ActivePowerUpEffects _activePowerUpEffects = new ActivePowerUpEffects();
+        private readonly ActivePowerUpEffects _activePowerUpEffects = new();
 
-        private static readonly Random _rng = new Random();
+        private static readonly Random _rng = new();
 
         public override void _Ready()
         {
+            var hud = GetNode<Hud>(MainNodes.Hud);
+            hud.StartGame += NewGame;
+
+            var player = GetNode<Player>(MainNodes.Player);
+            player.Hit += GameOver;
         }
 
         public void GameOver()
@@ -79,9 +76,9 @@ namespace Dodge
 
             GetTree().CallGroup(MobNodes.Group, "queue_free");
 
-            if (!(_activePowerUpEffects.Slowdown is null))
+            if (_activePowerUpEffects.Slowdown is not null)
             {
-                EmitSignal(nameof(SlowdownPowerUpEnded));
+                EmitSignal(SlowdownPowerUpSignals.Ended);
             }
 
             _activePowerUpEffects.Clear();
@@ -93,7 +90,7 @@ namespace Dodge
             GetBackgroundMusic().Play();
         }
 
-        public void SlowdownPowerUpCollected(SlowdownEffect effect)
+        public void OnSlowdownPowerUpCollected(SlowdownEffect effect)
         {
             GD.Print("Slowdown power-up signal triggered");
 
@@ -103,7 +100,7 @@ namespace Dodge
             _activePowerUpEffects.Slowdown = effect;
 
             GetSlowdownPowerUpTimer().Start();
-            EmitSignal(nameof(SlowdownPowerUpActive), effect);
+            EmitSignal(SlowdownPowerUpSignals.Active, effect);
         }
 
         public void OnSlowdownPowerUpTimerTimeout()
@@ -113,21 +110,22 @@ namespace Dodge
             GetSlowdownPowerUpTimer().Stop();
 
             _activePowerUpEffects.Slowdown = null;
-            EmitSignal(nameof(SlowdownPowerUpEnded));
+
+            EmitSignal(SlowdownPowerUpSignals.Ended);
         }
 
         public void OnMobTimerTimeout()
         {
             // Choose a random location on Path2D.
             var mobSpawnLocation = GetMobSpawnLocation();
-            mobSpawnLocation.Offset = _rng.Next();
+            mobSpawnLocation.Progress = _rng.Next();
 
             // Create a Mob instance and add it to the scene.
-            var mobInstance = Mob.Instance<Mob>();
+            var mobInstance = Mob.Instantiate<Mob>();
             AddChild(mobInstance);
 
-            Connect(nameof(SlowdownPowerUpActive), mobInstance, nameof(Entities.Mob.OnSlowdownPowerUpActive));
-            Connect(nameof(SlowdownPowerUpEnded), mobInstance, nameof(Entities.Mob.OnSlowdownPowerUpEnded));
+            mobInstance.SlowdownPowerUpActive += mobInstance.OnSlowdownPowerUpActive;
+            mobInstance.SlowdownPowerUpEnded += mobInstance.OnSlowdownPowerUpEnded;
 
             // Set the mob's direction perpendicular to the path direction.
             var direction = (mobSpawnLocation.Rotation + Mathf.Pi) / 2;
@@ -136,14 +134,14 @@ namespace Dodge
             mobInstance.Position = mobSpawnLocation.Position;
 
             // Add some randomness to the direction.
-            direction += RandRange(-Mathf.Pi / 4, Mathf.Pi / 4);
+            direction += RandfRange(-Mathf.Pi / 4, Mathf.Pi / 4);
             mobInstance.Rotation = direction;
 
             // Choose the velocity.
-            var velocity = RandRange(150f, 250f);
+            var velocity = RandfRange(150f, 250f);
             mobInstance.LinearVelocity = new Vector2(velocity, 0).Rotated(direction);
 
-            if (!(_activePowerUpEffects.Slowdown is null))
+            if (_activePowerUpEffects.Slowdown is not null)
             {
                 mobInstance.OnSlowdownPowerUpActive(_activePowerUpEffects.Slowdown);
             }
@@ -151,18 +149,18 @@ namespace Dodge
 
         public void OnPowerUpSpawnTimerTimeout()
         {
-            if (_slowdownPowerUpSpawned || !(_activePowerUpEffects.Slowdown is null))
+            if (_slowdownPowerUpSpawned || _activePowerUpEffects.Slowdown is not null)
             {
                 return;
             }
 
-            var powerUpInstance = PowerUp.Instance<SlowdownPowerUp>();
+            var powerUpInstance = PowerUp.Instantiate<SlowdownPowerUp>();
             AddChild(powerUpInstance);
 
-            var screenSize = GetViewport().Size;
+            var screenSize = GetViewport().GetVisibleRect().Size;
 
-            var powerUpX = _rng.Next(0, (int)screenSize.x);
-            var powerUpY = _rng.Next(0, (int)screenSize.y);
+            var powerUpX = _rng.Next(0, (int)screenSize.X);
+            var powerUpY = _rng.Next(0, (int)screenSize.Y);
 
             GD.Print($"Spawning a {powerUpInstance.GetType()} power-up at {powerUpX}, {powerUpY}");
 
@@ -201,8 +199,8 @@ namespace Dodge
         private Timer GetPowerUpSpawnTimer() =>
           GetNode<Timer>(MainNodes.PowerUpSpawnTimer);
 
-        private Position2D GetStartPosition() =>
-          GetNode<Position2D>(MainNodes.StartPosition);
+        private Marker2D GetStartPosition() =>
+          GetNode<Marker2D>(MainNodes.StartPosition);
 
         private Timer GetMobTimer() =>
           GetNode<Timer>(MainNodes.MobTimer);
@@ -216,7 +214,7 @@ namespace Dodge
         private Timer GetSlowdownPowerUpTimer() =>
           GetNode<Timer>(MainNodes.SlowdownPowerUpTimer);
 
-        private float RandRange(float min, float max)
+        private static float RandfRange(float min, float max)
         {
             return (float)(_rng.NextDouble() * (max - min)) + min;
         }

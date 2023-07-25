@@ -1,6 +1,6 @@
 namespace Dodge.PowerUps
 {
-    public class ActivePowerUpEffects
+    public partial class ActivePowerUpEffects
     {
         public SlowdownEffect? Slowdown { get; set; }
         public int Count { get => new bool[] { Slowdown != null }.Length; }

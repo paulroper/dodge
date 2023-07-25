@@ -3,9 +3,9 @@ using Godot;
 
 namespace Dodge.Entities
 {
-    public class MobTimer : Timer
+    public partial class MobTimer : Timer
     {
-        private float _originalWaitTime;
+        private double _originalWaitTime;
 
         public void OnSlowdownPowerUpActive(SlowdownEffect effect)
         {
